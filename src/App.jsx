@@ -5,12 +5,16 @@ import ImageUploader from './components/ImageUploader';
 import AnalysisResults from './components/AnalysisResults';
 import OnboardingPanel from './components/OnboardingPanel';
 import PrivacyPanel from './components/PrivacyPanel';
+import SettingsPanel from './components/SettingsPanel';
+import ThemeToggle from './components/ThemeToggle';
 import { ErrorBoundary, ErrorMessage } from './components/ErrorBoundary';
 import { LoadingSpinner } from './components/LoadingStates';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 const ONBOARDING_KEY = 'skinToneAnalyzer_onboardingComplete';
+const SETTINGS_KEY = 'skinToneAnalyzer_settingsOpen';
 
-function App() {
+function AppContent() {
     const [selectedImage, setSelectedImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [analysis, setAnalysis] = useState(null);
@@ -20,6 +24,7 @@ function App() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState(null);
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
     const [hasVisited, setHasVisited] = useState(false);
 
     useEffect(() => {
@@ -28,6 +33,12 @@ function App() {
             setShowOnboarding(true);
         }
         setHasVisited(!!visited);
+
+        const settingsOpen = localStorage.getItem(SETTINGS_KEY);
+        if (settingsOpen === 'true') {
+            setShowSettings(true);
+            localStorage.removeItem(SETTINGS_KEY);
+        }
     }, []);
 
     const dismissOnboarding = () => {
@@ -76,6 +87,11 @@ function App() {
         }
     };
 
+    const openSettings = () => {
+        localStorage.setItem(SETTINGS_KEY, 'true');
+        setShowSettings(true);
+    };
+
     return (
         <ErrorBoundary>
             <div className="app-container">
@@ -83,11 +99,39 @@ function App() {
                     <OnboardingPanel onDismiss={dismissOnboarding} />
                 )}
 
+                {showSettings && (
+                    <div className="modal-overlay">
+                        <div className="modal-content settings-modal">
+                            <button 
+                                className="modal-close"
+                                onClick={() => setShowSettings(false)}
+                            >
+                                ×
+                            </button>
+                            <SettingsPanel onClose={() => setShowSettings(false)} />
+                        </div>
+                    </div>
+                )}
+
                 <header className="app-header">
-                    <h1 className="app-title">Skin Tone Analyzer</h1>
-                    <p className="app-subtitle">
-                        Discover your perfect color palette based on your unique skin tone
-                    </p>
+                    <div className="header-content">
+                        <div className="header-text">
+                            <h1 className="app-title">Skin Tone Analyzer</h1>
+                            <p className="app-subtitle">
+                                Discover your perfect color palette based on your unique skin tone
+                            </p>
+                        </div>
+                        <div className="header-actions">
+                            <ThemeToggle showLabel={false} />
+                            <button 
+                                className="settings-btn"
+                                onClick={openSettings}
+                                aria-label="Open settings"
+                            >
+                                ⚙️
+                            </button>
+                        </div>
+                    </div>
                 </header>
 
                 <main className="main-content">
@@ -126,6 +170,14 @@ function App() {
                 </footer>
             </div>
         </ErrorBoundary>
+    );
+}
+
+function App() {
+    return (
+        <ThemeProvider>
+            <AppContent />
+        </ThemeProvider>
     );
 }
 
