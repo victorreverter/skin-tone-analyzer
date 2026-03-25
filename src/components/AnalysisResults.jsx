@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ColorPalette from './ColorPalette';
 import ResultCard from './ResultCard';
 import SkinToneHistogram from './SkinToneHistogram';
 import CalibrationHint from './CalibrationHint';
 import ExportPanel from './ExportPanel';
+import ColorSpaceDiagram from './ColorSpaceDiagram';
+import ColorComparisonSlider from './ColorComparisonSlider';
+import SamplingOverlay from './SamplingOverlay';
+import CalibrationWizard from './CalibrationWizard';
+import MultiSampleAnalyzer from './MultiSampleAnalyzer';
 
-function AnalysisResults({ analysis, palette, skinPixels, confidence }) {
+function AnalysisResults({ analysis, palette, skinPixels, confidence, imagePreview }) {
+    const [activeTab, setActiveTab] = useState('overview');
+    const [showCalibrationWizard, setShowCalibrationWizard] = useState(false);
+
     if (!analysis || !palette) return null;
+
+    const tabs = [
+        { id: 'overview', label: 'Overview' },
+        { id: 'color-space', label: 'Color Space' },
+        { id: 'compare', label: 'Compare' },
+        { id: 'multi-sample', label: 'Multi-Sample' }
+    ];
 
     return (
         <div className="results-container">
@@ -17,26 +32,103 @@ function AnalysisResults({ analysis, palette, skinPixels, confidence }) {
                 </p>
             </div>
 
-            <div className="results-layout">
-                <div className="results-main">
-                    <ResultCard 
-                        analysis={analysis} 
-                        palette={palette}
-                        confidence={confidence}
-                    />
-
-                    <SkinToneHistogram 
-                        skinPixels={skinPixels}
-                        primaryColor={analysis.hex}
-                    />
-
-                    <CalibrationHint />
-                </div>
-
-                <div className="results-sidebar">
-                    <ExportPanel analysis={analysis} palette={palette} />
-                </div>
+            <div className="results-tabs">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                        onClick={() => setActiveTab(tab.id)}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
             </div>
+
+            {activeTab === 'overview' && (
+                <>
+                    <div className="results-layout">
+                        <div className="results-main">
+                            <ResultCard 
+                                analysis={analysis} 
+                                palette={palette}
+                                confidence={confidence}
+                            />
+
+                            <SkinToneHistogram 
+                                skinPixels={skinPixels}
+                                primaryColor={analysis.hex}
+                            />
+
+                            {imagePreview && (
+                                <SamplingOverlay 
+                                    image={imagePreview}
+                                    skinPixels={skinPixels}
+                                />
+                            )}
+
+                            <CalibrationHint />
+
+                            <button 
+                                className="calibration-wizard-btn"
+                                onClick={() => setShowCalibrationWizard(true)}
+                            >
+                                Run Calibration Wizard
+                            </button>
+                        </div>
+
+                        <div className="results-sidebar">
+                            <ExportPanel analysis={analysis} palette={palette} />
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {activeTab === 'color-space' && (
+                <div className="color-space-section">
+                    <ColorSpaceDiagram 
+                        primaryColor={analysis.hex}
+                        undertone={analysis.undertone}
+                    />
+                </div>
+            )}
+
+            {activeTab === 'compare' && (
+                <div className="compare-section">
+                    <ColorComparisonSlider 
+                        yourColor={analysis.hex}
+                        recommendedColors={[palette.colors[0], palette.colors[1]]}
+                    />
+                </div>
+            )}
+
+            {activeTab === 'multi-sample' && (
+                <div className="multi-sample-section">
+                    <MultiSampleAnalyzer 
+                        onComplete={(averagedResult) => {
+                            console.log('Averaged result:', averagedResult);
+                        }}
+                    />
+                </div>
+            )}
+
+            {showCalibrationWizard && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <button 
+                            className="modal-close"
+                            onClick={() => setShowCalibrationWizard(false)}
+                        >
+                            ×
+                        </button>
+                        <CalibrationWizard 
+                            onComplete={(calibration) => {
+                                console.log('Calibration complete:', calibration);
+                                setShowCalibrationWizard(false);
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="palette-section">
                 <h2 className="section-title">Your Perfect Color Palette</h2>

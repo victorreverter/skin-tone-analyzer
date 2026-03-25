@@ -10,6 +10,7 @@ const ONBOARDING_KEY = 'skinToneAnalyzer_onboardingComplete';
 
 function App() {
     const [selectedImage, setSelectedImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const [analysis, setAnalysis] = useState(null);
     const [palette, setPalette] = useState(null);
     const [skinPixels, setSkinPixels] = useState([]);
@@ -33,8 +34,9 @@ function App() {
         setHasVisited(true);
     };
 
-    const handleImageSelect = (file) => {
+    const handleImageSelect = (file, previewUrl) => {
         setSelectedImage(file);
+        setImagePreview(previewUrl);
         setAnalysis(null);
         setPalette(null);
         setError(null);
@@ -129,6 +131,7 @@ function App() {
                         palette={palette}
                         skinPixels={skinPixels}
                         confidence={confidence}
+                        imagePreview={imagePreview}
                     />
                 )}
             </main>

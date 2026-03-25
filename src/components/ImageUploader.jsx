@@ -49,11 +49,10 @@ function ImageUploader({ onImageSelect, onAnalyze }) {
         const reader = new FileReader();
         reader.onload = (e) => {
             setImagePreview(e.target.result);
+            // Notify parent component with file and preview URL
+            onImageSelect(file, e.target.result);
         };
         reader.readAsDataURL(file);
-
-        // Notify parent component
-        onImageSelect(file);
     };
 
     const handleAnalyzeClick = () => {
