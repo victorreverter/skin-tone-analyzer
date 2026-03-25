@@ -65,10 +65,14 @@ const SkinToneAnalyzer = {
         // Determine undertone and season
         const undertone = this.determineUndertone(avgColor);
 
+        const confidence = Math.min(95, 70 + (skinPixels.length / 10));
+
         return {
             skinTone: avgColor,
             undertone: undertone,
-            hex: this.rgbToHex(avgColor)
+            hex: this.rgbToHex(avgColor),
+            skinPixels: skinPixels,
+            confidence: Math.round(confidence)
         };
     },
 

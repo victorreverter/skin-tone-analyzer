@@ -1,15 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SkinToneAnalyzer from './utils/SkinToneAnalyzer';
 import PaletteRecommender from './utils/PaletteRecommender';
 import ImageUploader from './components/ImageUploader';
 import AnalysisResults from './components/AnalysisResults';
+import OnboardingPanel from './components/OnboardingPanel';
+import PrivacyPanel from './components/PrivacyPanel';
+
+const ONBOARDING_KEY = 'skinToneAnalyzer_onboardingComplete';
 
 function App() {
     const [selectedImage, setSelectedImage] = useState(null);
     const [analysis, setAnalysis] = useState(null);
     const [palette, setPalette] = useState(null);
+    const [skinPixels, setSkinPixels] = useState([]);
+    const [confidence, setConfidence] = useState(0);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState(null);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [hasVisited, setHasVisited] = useState(false);
+
+    useEffect(() => {
+        const visited = localStorage.getItem(ONBOARDING_KEY);
+        if (!visited) {
+            setShowOnboarding(true);
+        }
+        setHasVisited(!!visited);
+    }, []);
+
+    const dismissOnboarding = () => {
+        localStorage.setItem(ONBOARDING_KEY, 'true');
+        setShowOnboarding(false);
+        setHasVisited(true);
+    };
 
     const handleImageSelect = (file) => {
         setSelectedImage(file);
@@ -23,15 +45,19 @@ function App() {
         setError(null);
 
         try {
-            // Analyze the image
             const result = await SkinToneAnalyzer.analyzeImage(file);
             setAnalysis(result);
 
-            // Get recommended palette based on skin tone analysis
+            if (result.skinPixels) {
+                setSkinPixels(result.skinPixels);
+            }
+            
+            const confidenceScore = result.confidence || Math.min(95, 70 + (result.skinPixels?.length || 0) / 10);
+            setConfidence(Math.round(confidenceScore));
+
             const recommendedPalette = PaletteRecommender.getPalette(result);
             setPalette(recommendedPalette);
 
-            // Scroll to results
             setTimeout(() => {
                 const resultsElement = document.querySelector('.results-container');
                 if (resultsElement) {
@@ -48,6 +74,10 @@ function App() {
 
     return (
         <div className="app-container">
+            {showOnboarding && (
+                <OnboardingPanel onDismiss={dismissOnboarding} />
+            )}
+
             <header className="app-header">
                 <h1 className="app-title">Skin Tone Analyzer</h1>
                 <p className="app-subtitle">
@@ -94,9 +124,18 @@ function App() {
                 )}
 
                 {analysis && palette && !isAnalyzing && (
-                    <AnalysisResults analysis={analysis} palette={palette} />
+                    <AnalysisResults 
+                        analysis={analysis} 
+                        palette={palette}
+                        skinPixels={skinPixels}
+                        confidence={confidence}
+                    />
                 )}
             </main>
+
+            <footer className="app-footer">
+                <PrivacyPanel />
+            </footer>
 
             <style>{`
                 @keyframes pulse {

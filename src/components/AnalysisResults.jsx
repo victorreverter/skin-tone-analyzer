@@ -1,44 +1,43 @@
 import React from 'react';
 import ColorPalette from './ColorPalette';
+import ResultCard from './ResultCard';
+import SkinToneHistogram from './SkinToneHistogram';
+import CalibrationHint from './CalibrationHint';
+import ExportPanel from './ExportPanel';
 
-function AnalysisResults({ analysis, palette }) {
+function AnalysisResults({ analysis, palette, skinPixels, confidence }) {
     if (!analysis || !palette) return null;
 
     return (
         <div className="results-container">
-            <div className="results-grid">
-                {/* Skin Tone Card */}
-                <div className="result-card">
-                    <div className="result-label">Your Skin Tone</div>
-                    <div className="result-value">{analysis.hex}</div>
-                    <div
-                        className="skin-tone-swatch"
-                        style={{ backgroundColor: analysis.hex }}
-                    ></div>
+            <div className="results-header">
+                <h2 className="results-title">Your Analysis Results</h2>
+                <p className="results-subtitle">
+                    Based on the analysis of your photo
+                </p>
+            </div>
+
+            <div className="results-layout">
+                <div className="results-main">
+                    <ResultCard 
+                        analysis={analysis} 
+                        palette={palette}
+                        confidence={confidence}
+                    />
+
+                    <SkinToneHistogram 
+                        skinPixels={skinPixels}
+                        primaryColor={analysis.hex}
+                    />
+
+                    <CalibrationHint />
                 </div>
 
-                {/* Undertone Card */}
-                <div className="result-card">
-                    <div className="result-label">Undertone</div>
-                    <div className="result-value">{analysis.undertone}</div>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-sm)' }}>
-                        {analysis.undertone === 'Warm' && 'Golden, peachy undertones'}
-                        {analysis.undertone === 'Cool' && 'Pink, rosy undertones'}
-                        {analysis.undertone === 'Neutral' && 'Balanced undertones'}
-                    </p>
-                </div>
-
-                {/* Skin Type Card */}
-                <div className="result-card">
-                    <div className="result-label">Skin Type</div>
-                    <div className="result-value">{palette.name}</div>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-sm)' }}>
-                        {palette.description}
-                    </p>
+                <div className="results-sidebar">
+                    <ExportPanel analysis={analysis} palette={palette} />
                 </div>
             </div>
 
-            {/* Color Palette Section */}
             <div className="palette-section">
                 <h2 className="section-title">Your Perfect Color Palette</h2>
 
