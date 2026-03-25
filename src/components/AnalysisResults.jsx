@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ColorPalette from './ColorPalette';
 import ResultCard from './ResultCard';
 import SkinToneHistogram from './SkinToneHistogram';
@@ -9,10 +9,21 @@ import ColorComparisonSlider from './ColorComparisonSlider';
 import SamplingOverlay from './SamplingOverlay';
 import CalibrationWizard from './CalibrationWizard';
 import MultiSampleAnalyzer from './MultiSampleAnalyzer';
+import HistoryPanel from './HistoryPanel';
+import HistoryManager from '../utils/HistoryManager';
 
 function AnalysisResults({ analysis, palette, skinPixels, confidence, imagePreview }) {
     const [activeTab, setActiveTab] = useState('overview');
     const [showCalibrationWizard, setShowCalibrationWizard] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
+    const [savedToHistory, setSavedToHistory] = useState(false);
+
+    useEffect(() => {
+        if (analysis && palette && !savedToHistory) {
+            HistoryManager.addToHistory(analysis, palette);
+            setSavedToHistory(true);
+        }
+    }, [analysis, palette, savedToHistory]);
 
     if (!analysis || !palette) return null;
 
@@ -23,13 +34,28 @@ function AnalysisResults({ analysis, palette, skinPixels, confidence, imagePrevi
         { id: 'multi-sample', label: 'Multi-Sample' }
     ];
 
+    const handleSelectHistory = (historyItem) => {
+        console.log('Selected history item:', historyItem);
+        setShowHistory(false);
+    };
+
     return (
         <div className="results-container">
             <div className="results-header">
-                <h2 className="results-title">Your Analysis Results</h2>
-                <p className="results-subtitle">
-                    Based on the analysis of your photo
-                </p>
+                <div className="results-header-content">
+                    <div>
+                        <h2 className="results-title">Your Analysis Results</h2>
+                        <p className="results-subtitle">
+                            Based on the analysis of your photo
+                        </p>
+                    </div>
+                    <button 
+                        className="history-toggle-btn"
+                        onClick={() => setShowHistory(true)}
+                    >
+                        📋 History
+                    </button>
+                </div>
             </div>
 
             <div className="results-tabs">
@@ -63,6 +89,9 @@ function AnalysisResults({ analysis, palette, skinPixels, confidence, imagePrevi
                                 <SamplingOverlay 
                                     image={imagePreview}
                                     skinPixels={skinPixels}
+                                    heatmapData={analysis.heatmapData}
+                                    faceRegion={analysis.faceRegion}
+                                    imageDimensions={analysis.canvasSize}
                                 />
                             )}
 
@@ -125,6 +154,23 @@ function AnalysisResults({ analysis, palette, skinPixels, confidence, imagePrevi
                                 console.log('Calibration complete:', calibration);
                                 setShowCalibrationWizard(false);
                             }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {showHistory && (
+                <div className="modal-overlay">
+                    <div className="modal-content history-modal">
+                        <button 
+                            className="modal-close"
+                            onClick={() => setShowHistory(false)}
+                        >
+                            ×
+                        </button>
+                        <HistoryPanel 
+                            onSelectHistory={handleSelectHistory}
+                            onClose={() => setShowHistory(false)}
                         />
                     </div>
                 </div>
