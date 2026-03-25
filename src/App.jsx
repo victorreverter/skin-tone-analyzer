@@ -5,6 +5,8 @@ import ImageUploader from './components/ImageUploader';
 import AnalysisResults from './components/AnalysisResults';
 import OnboardingPanel from './components/OnboardingPanel';
 import PrivacyPanel from './components/PrivacyPanel';
+import { ErrorBoundary, ErrorMessage } from './components/ErrorBoundary';
+import { LoadingSpinner } from './components/LoadingStates';
 
 const ONBOARDING_KEY = 'skinToneAnalyzer_onboardingComplete';
 
@@ -75,78 +77,55 @@ function App() {
     };
 
     return (
-        <div className="app-container">
-            {showOnboarding && (
-                <OnboardingPanel onDismiss={dismissOnboarding} />
-            )}
-
-            <header className="app-header">
-                <h1 className="app-title">Skin Tone Analyzer</h1>
-                <p className="app-subtitle">
-                    Discover your perfect color palette based on your unique skin tone
-                </p>
-            </header>
-
-            <main className="main-content">
-                <ImageUploader
-                    onImageSelect={handleImageSelect}
-                    onAnalyze={handleAnalyze}
-                />
-
-                {isAnalyzing && (
-                    <div style={{
-                        textAlign: 'center',
-                        marginTop: 'var(--spacing-xl)',
-                        color: 'var(--text-secondary)',
-                        fontSize: 'var(--font-size-lg)'
-                    }}>
-                        <div style={{
-                            fontSize: '3rem',
-                            marginBottom: 'var(--spacing-md)',
-                            animation: 'pulse 1.5s ease-in-out infinite'
-                        }}>
-                            🔍
-                        </div>
-                        Analyzing your skin tone...
-                    </div>
+        <ErrorBoundary>
+            <div className="app-container">
+                {showOnboarding && (
+                    <OnboardingPanel onDismiss={dismissOnboarding} />
                 )}
 
-                {error && (
-                    <div style={{
-                        marginTop: 'var(--spacing-xl)',
-                        padding: 'var(--spacing-lg)',
-                        background: 'hsla(0, 70%, 50%, 0.1)',
-                        border: '1px solid hsla(0, 70%, 50%, 0.3)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'hsl(0, 70%, 70%)',
-                        textAlign: 'center'
-                    }}>
-                        ⚠️ {error}
-                    </div>
-                )}
+                <header className="app-header">
+                    <h1 className="app-title">Skin Tone Analyzer</h1>
+                    <p className="app-subtitle">
+                        Discover your perfect color palette based on your unique skin tone
+                    </p>
+                </header>
 
-                {analysis && palette && !isAnalyzing && (
-                    <AnalysisResults 
-                        analysis={analysis} 
-                        palette={palette}
-                        skinPixels={skinPixels}
-                        confidence={confidence}
-                        imagePreview={imagePreview}
+                <main className="main-content">
+                    <ImageUploader
+                        onImageSelect={handleImageSelect}
+                        onAnalyze={handleAnalyze}
                     />
-                )}
-            </main>
 
-            <footer className="app-footer">
-                <PrivacyPanel />
-            </footer>
+                    {isAnalyzing && (
+                        <div className="analyzing-container">
+                            <LoadingSpinner size="large" message="Analyzing your skin tone..." />
+                        </div>
+                    )}
 
-            <style>{`
-                @keyframes pulse {
-                    0%, 100% { transform: scale(1); opacity: 1; }
-                    50% { transform: scale(1.1); opacity: 0.8; }
-                }
-            `}</style>
-        </div>
+                    {error && (
+                        <ErrorMessage 
+                            message={error}
+                            onDismiss={() => setError(null)}
+                            onRetry={() => selectedImage && handleAnalyze(selectedImage)}
+                        />
+                    )}
+
+                    {analysis && palette && !isAnalyzing && (
+                        <AnalysisResults 
+                            analysis={analysis} 
+                            palette={palette}
+                            skinPixels={skinPixels}
+                            confidence={confidence}
+                            imagePreview={imagePreview}
+                        />
+                    )}
+                </main>
+
+                <footer className="app-footer">
+                    <PrivacyPanel />
+                </footer>
+            </div>
+        </ErrorBoundary>
     );
 }
 
